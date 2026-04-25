@@ -1,0 +1,5 @@
+{
+  "llmProvider": "claude",
+  "defaultTags": [],
+  "outputFormats": ["markdown", "html"]
+}

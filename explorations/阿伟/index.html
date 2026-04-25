@@ -1,76 +1,131 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<title>探索期 · 起步页</title>
-<style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
-    max-width: 720px;
-    margin: 60px auto;
-    padding: 0 24px;
-    color: #24292f;
-    line-height: 1.7;
-  }
-  h1 { font-size: 28px; margin-bottom: 8px; }
-  h2 { font-size: 18px; margin-top: 32px; border-bottom: 1px solid #d8dee4; padding-bottom: 4px; }
-  code { background: #f3f5f7; padding: 2px 6px; border-radius: 4px; font-family: "JetBrains Mono", Consolas, monospace; font-size: 0.9em; }
-  .hint { background: #fff8c5; border-left: 4px solid #d4a72c; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 24px 0; }
-  .meta { color: #57606a; font-size: 13px; margin-bottom: 32px; }
-  ul { padding-left: 22px; }
-  li { margin: 4px 0; }
-  .row { display: flex; gap: 16px; flex-wrap: wrap; }
-  .row > div { flex: 1; min-width: 280px; padding: 14px 18px; background: #f6f8fa; border-radius: 8px; border: 1px solid #d8dee4; }
-  .row h3 { margin: 0 0 8px; font-size: 15px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>洞察报告 — DeepInsight</title>
+  <style>
+    :root {
+      --ink: #18181b; --muted: #71717a; --border: #e4e4e7;
+      --bg: #ffffff; --bg-2: #fafafa; --accent: #2563eb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink: #fafafa; --muted: #a1a1aa; --border: #27272a;
+        --bg: #09090b; --bg-2: #18181b; --accent: #60a5fa;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6; color: var(--ink); background: var(--bg);
+      padding: 2rem; max-width: 1200px; margin: 0 auto;
+    }
+    h1 { font-size: 2rem; margin-bottom: 1rem; }
+    .filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1.5rem 0; }
+    .tag-btn {
+      padding: 0.5rem 1rem; border: 1px solid var(--border);
+      background: var(--bg-2); border-radius: 6px; cursor: pointer;
+      font-size: 0.9rem; transition: all 0.2s;
+    }
+    .tag-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .tag-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .reports { display: grid; gap: 1rem; margin-top: 2rem; }
+    .report-card {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 1.5rem; background: var(--bg-2); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .report-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .report-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .report-card .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
+    .report-card .tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .report-card .tags span {
+      padding: 0.25rem 0.5rem; background: var(--bg); border-radius: 4px;
+      font-size: 0.8rem; color: var(--muted);
+    }
+    .empty { text-align: center; color: var(--muted); padding: 3rem; }
+  </style>
 </head>
 <body>
-  <h1>👋 你的探索从这里开始</h1>
-  <p class="meta">这是 <code>explorations/&lt;代号&gt;/index.html</code> 的起步模板。把它换成你的探索内容。</p>
+  <h1>🔍 洞察报告</h1>
+  <p style="color: var(--muted); margin-bottom: 1rem;">
+    点击报告卡片查看详情 · 点击标签过滤
+  </p>
 
-  <div class="hint">
-    第一步：编辑同目录的 <code>README.md</code>（标题 / 思路 / 截图路径），看板会自动收录你的卡片。
-  </div>
+  <div class="filters" id="filters"></div>
+  <div class="reports" id="reports"></div>
 
-  <h2>你可以做什么</h2>
-  <div class="row">
-    <div>
-      <h3>🎨 静态可视化</h3>
-      <ul>
-        <li>D3 / Chart.js / vis-network 画图</li>
-        <li>Mermaid 渲染流程</li>
-        <li>纯 HTML/CSS 交互卡片</li>
-      </ul>
-    </div>
-    <div>
-      <h3>⚛ 用框架</h3>
-      <ul>
-        <li>Vite / Next / Astro / Vue / Svelte</li>
-        <li>build 后把产物放本目录</li>
-        <li>确保 <code>index.html</code> 是入口</li>
-      </ul>
-    </div>
-    <div>
-      <h3>📝 设计稿</h3>
-      <ul>
-        <li>纯 markdown 渲染的设计文档</li>
-        <li>截图 + 注解</li>
-        <li>线框图（Excalidraw 导出 SVG）</li>
-      </ul>
-    </div>
-  </div>
+  <script>
+    let allReports = [];
+    let activeTags = new Set();
 
-  <h2>不要做的事</h2>
-  <ul>
-    <li>调真实 API（前期纯静态，用 mock 数据展示思路）</li>
-    <li>写到 <code>/web</code> 或其他同事目录（hook 会拦你）</li>
-    <li>提交大于 200KB 的图片到仓库</li>
-  </ul>
+    async function loadReports() {
+      try {
+        const res = await fetch('reports/index.json');
+        allReports = await res.json();
+        renderFilters();
+        renderReports();
+      } catch (err) {
+        document.getElementById('reports').innerHTML = '<div class="empty">暂无报告。运行 <code>node insight-cli.mjs --topic "课题"</code> 生成第一份报告。</div>';
+      }
+    }
 
-  <h2>提交</h2>
-  <pre><code>git add explorations/&lt;代号&gt;
-git commit -m "[pair] 阶段性探索：&lt;一句话&gt;"
-git push</code></pre>
-  <p>push 到 main 后，CI 30-60 秒内会刷新看板「前期探索」tab。</p>
+    function renderFilters() {
+      const allTags = new Set();
+      allReports.forEach(r => {
+        [...(r.tags.user || []), ...(r.tags.auto || [])].forEach(t => allTags.add(t));
+      });
+
+      const html = Array.from(allTags).map(tag =>
+        `<button class="tag-btn" onclick="toggleTag('${tag}')">${tag}</button>`
+      ).join('');
+
+      document.getElementById('filters').innerHTML = html || '<span style="color: var(--muted)">暂无标签</span>';
+    }
+
+    function toggleTag(tag) {
+      if (activeTags.has(tag)) activeTags.delete(tag);
+      else activeTags.add(tag);
+      renderReports();
+      document.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.classList.toggle('active', activeTags.has(btn.textContent));
+      });
+    }
+
+    function renderReports() {
+      let filtered = allReports;
+      if (activeTags.size > 0) {
+        filtered = allReports.filter(r => {
+          const tags = [...(r.tags.user || []), ...(r.tags.auto || [])];
+          return Array.from(activeTags).some(t => tags.includes(t));
+        });
+      }
+
+      if (filtered.length === 0) {
+        document.getElementById('reports').innerHTML = '<div class="empty">无匹配报告</div>';
+        return;
+      }
+
+      const html = filtered.map(r => {
+        const tags = [...(r.tags.user || []), ...(r.tags.auto || [])];
+        return `
+          <div class="report-card" onclick="openReport('${r.path}')">
+            <h3>${r.title}</h3>
+            <div class="meta">${r.createdAt.slice(0, 10)} · ${r.type}</div>
+            <div class="tags">${tags.map(t => `<span>${t}</span>`).join('')}</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('reports').innerHTML = html;
+    }
+
+    function openReport(path) {
+      window.open(`reports/${path}.html`, '_blank');
+    }
+
+    loadReports();
+  </script>
 </body>
 </html>

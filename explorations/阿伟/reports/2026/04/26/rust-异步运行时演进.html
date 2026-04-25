@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rust 异步运行时演进 — DeepInsight</title>
+  <style>
+:root {
+  --ink: #18181b;
+  --muted: #71717a;
+  --muted-2: #a1a1aa;
+  --border: #e4e4e7;
+  --bg: #ffffff;
+  --bg-2: #fafafa;
+  --accent: #2563eb;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #fafafa;
+    --muted: #a1a1aa;
+    --muted-2: #71717a;
+    --border: #27272a;
+    --bg: #09090b;
+    --bg-2: #18181b;
+    --accent: #60a5fa;
+  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+h1 { font-size: 2.5rem; margin: 2rem 0 1rem; font-weight: 700; }
+h2 { font-size: 1.75rem; margin: 2rem 0 1rem; font-weight: 600; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+h3 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem; font-weight: 600; }
+p { margin: 1rem 0; }
+ul, ol { margin: 1rem 0; padding-left: 2rem; }
+li { margin: 0.5rem 0; }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+th, td { border: 1px solid var(--border); padding: 0.75rem; text-align: left; }
+th { background: var(--bg-2); font-weight: 600; }
+code { background: var(--bg-2); padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; font-family: "Courier New", monospace; }
+pre { background: var(--bg-2); padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0; }
+pre code { background: none; padding: 0; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+.meta { color: var(--muted); font-size: 0.9rem; margin: 1rem 0; }
+</style>
+</head>
+<body>
+  <div class="meta">
+    生成时间：2026-04-25T23:20:23.853Z ·
+    模型：claude ·
+    成本：$0.0576 ·
+    标签：异步运行时, Rust, 零成本抽象, io_uring, 并发模型, Tokio, 状态机, 系统编程
+  </div>
+  <thinking>
+The user wants a comprehensive technical analysis report on the evolution of Rust's async runtime. Let me write a detailed Markdown report covering all the requested sections. This is a knowledge-based task, so I'll draw on my knowledge of Rust's async ecosystem.<p>Let me structure this carefully with accurate technical details.
+</thinking></p>
+<h1>Rust 异步运行时演进</h1>
+<h2>TL;DR</h2>
+<p>Rust 异步生态从 green thread 模型演进到基于 <code>Future</code> trait + <code>Pin</code> + <code>Waker</code> 的零成本抽象方案，经历了三代设计迭代。Tokio 已成为事实标准，但 async-std、smol、monoio 等运行时在不同场景下各有优势，生态呈现多运行时共存格局。当前核心痛点在于运行时不可互换、<code>async fn in trait</code> 刚刚稳定、以及 <code>AsyncRead</code>/<code>AsyncWrite</code> 等基础 trait 尚未进入标准库，社区正通过 keyword generics、async drop 等提案逐步解决。</p>
+<h2>关键发现</h2>
+<h3>发现 1：从 green thread 到零成本 Future — 三代异步模型的根本性转变</h3>
+<p>Rust 异步的演进并非线性改良，而是经历了三次范式级别的重构。第一代（2014 年前）采用 libgreen 提供的 green thread（M:N 线程模型），直接内置于标准库，但因隐式的运行时开销与 Rust &quot;零成本抽象&quot;哲学冲突，在 RFC 230 中被移除。第二代（2016-2018）以 <code>futures 0.1</code> 为核心，引入了基于 <code>poll</code> 的 <code>Future</code> trait，但采用 task-notify 模型，要求手动处理 <code>NotReady</code> 返回值，回调嵌套严重，组合子链（<code>.and_then().map()...</code>）导致类型签名爆炸。第三代（2019 至今）通过 RFC 2592 将 <code>Future</code> trait 纳入标准库，引入 <code>async/await</code> 语法糖、<code>Pin&lt;T&gt;</code> 解决自引用问题、<code>Waker</code> 替代旧的通知机制，实现了真正的零成本状态机编译。编译器将 <code>async fn</code> 转换为匿名枚举状态机，每个 <code>.await</code> 点对应一个状态变体，无需堆分配，这是 Rust 异步区别于 Go goroutine 和 Erlang process 的根本技术优势。</p>
+<h3>发现 2：运行时碎片化 — 生态最大的结构性挑战</h3>
+<p>Rust 标准库只定义了 <code>Future</code> trait，不提供执行器（executor）和反应器（reactor），这一设计决策导致了运行时碎片化问题。具体表现为：Tokio 的 <code>tokio::io::AsyncRead</code> 与 <code>futures::AsyncRead</code> 签名不同（前者要求 <code>ReadBuf</code>，后者使用 <code>&amp;mut [u8]</code>）；<code>tokio::spawn</code> 要求 future 为 <code>Send + &#39;static</code>，而单线程运行时如 <code>monoio</code> 无此约束；<code>tokio::net::TcpStream</code> 与 <code>async-std::net::TcpStream</code> 不可互换。这意味着库作者要么绑定特定运行时，要么通过 feature flag 做条件编译（如 <code>reqwest</code> 同时支持 Tokio 和 async-std），增加了大量维护负担。<code>async-compat</code> crate 和 <code>agnostic</code> 等项目试图提供适配层，但本质上是 shim 而非解决方案。真正的出路在于将 <code>AsyncRead</code>、<code>AsyncWrite</code>、<code>AsyncIterator</code> 等核心 trait 标准化进 <code>std</code>，这一工作由 async working group 推进中，但进展缓慢。</p>
+<h3>发现 3：io_uring 驱动的新一代运行时正在重塑性能边界</h3>
+<p>传统异步运行时（Tokio、async-std）基于 epoll/kqueue 的就绪模型（readiness-based），即先查询 fd 是否就绪再执行 I/O。而 Linux 5.1 引入的 io_uring 采用完成模型（completion-based），用户提交 I/O 请求到 submission queue，内核完成后放入 completion queue，减少系统调用次数并支持批量提交。这催生了 <code>monoio</code>（字节跳动）、<code>glommio</code>（Datadog/ScyllaDB 团队）、<code>tokio-uring</code> 等新运行时。但 completion-based 模型与 Rust 现有借用语义存在根本张力：提交 I/O 后 buffer 的所有权必须转移给内核，直到完成才能归还，这与 <code>AsyncRead::poll_read(&amp;mut buf)</code> 的借用模式不兼容。因此 monoio 和 tokio-uring 采用了 buf-ownership 模式（如 <code>IoBuf</code> trait），要求用户传递 owned buffer。这一设计差异使得基于 io_uring 的运行时难以与现有生态兼容，形成了新的碎片化维度。</p>
+<h2>技术对比</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Tokio</th>
+<th>async-std</th>
+<th>smol</th>
+<th>monoio</th>
+<th>glommio</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>核心特点</td>
+<td>多线程 work-stealing 调度器 + epoll/kqueue reactor</td>
+<td>类标准库 API 设计，基于 async-task</td>
+<td>极简设计，~1500 行核心代码，基于 polling + async-executor</td>
+<td>基于 io_uring 的 thread-per-core 模型</td>
+<td>基于 io_uring 的 thread-per-core + 合作式调度</td>
+</tr>
+<tr>
+<td>I/O 模型</td>
+<td>Readiness-based</td>
+<td>Readiness-based</td>
+<td>Readiness-based</td>
+<td>Completion-based</td>
+<td>Completion-based</td>
+</tr>
+<tr>
+<td>调度策略</td>
+<td>多线程 work-stealing（可选 <code>current_thread</code>）</td>
+<td>自适应线程池</td>
+<td>可插拔 executor，默认多线程</td>
+<td>单线程 per core，无锁</td>
+<td>单线程 per core，合作式 task budgeting</td>
+</tr>
+<tr>
+<td>生态成熟度</td>
+<td>极高，事实标准（hyper、tonic、axum 等）</td>
+<td>中等，社区活跃度下降</td>
+<td>较低，适合嵌入式使用</td>
+<td>较低，字节内部大规模使用</td>
+<td>较低，专注存储/数据库场景</td>
+</tr>
+<tr>
+<td>优势</td>
+<td>生态最完善、文档最全、性能均衡、久经生产验证</td>
+<td>API 直觉友好、学习曲线低</td>
+<td>极轻量、编译快、易于理解和定制</td>
+<td>io_uring 原生支持、极致 I/O 性能、无跨线程开销</td>
+<td>高级 I/O 调度（DMA、直接 I/O）、存储场景优化</td>
+</tr>
+<tr>
+<td>劣势</td>
+<td>二进制体积较大、编译时间长、API 复杂度高</td>
+<td>维护节奏放缓、部分 API 与 Tokio 不兼容</td>
+<td>功能较少、缺乏高级特性（如 tracing 集成）</td>
+<td>仅支持 Linux、生态小、buffer 所有权模型学习成本高</td>
+<td>仅支持 Linux、API 不稳定、文档不足</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>Web 服务、微服务、通用网络应用</td>
+<td>教学、小型项目、偏好标准库风格的团队</td>
+<td>嵌入式异步、库内部使用、需要轻量运行时</td>
+<td>高性能代理/网关、存储引擎、字节级 I/O 密集</td>
+<td>数据库引擎、分布式存储、需要精细 I/O 控制</td>
+</tr>
+</tbody></table>
+<h2>发展时间线</h2>
+<ul>
+<li><strong>2014-11</strong> RFC 230 通过，从标准库移除 libgreen 和 green thread 运行时，确立了 Rust &quot;无隐式运行时&quot;的设计原则</li>
+<li><strong>2016-08</strong> <code>futures 0.1</code> 发布（Alex Crichton），引入基于 <code>poll</code> 的 <code>Future</code> trait 和 <code>Task</code> 通知机制，奠定异步编程基础模型</li>
+<li><strong>2018-04</strong> Tokio 0.1 正式发布，基于 <code>futures 0.1</code> + mio，提供完整的多线程异步运行时，迅速成为生态中心</li>
+<li><strong>2018-05</strong> <code>Pin&lt;T&gt;</code> RFC（RFC 2349）被合并，解决了 async 生成器中自引用结构的安全性问题，为 async/await 扫清了最后的类型系统障碍</li>
+<li><strong>2019-07</strong> <code>async-std 0.99</code> 发布，定位为异步版标准库，试图提供比 Tokio 更友好的 API，引发社区关于&quot;运行时之争&quot;的广泛讨论</li>
+<li><strong>2019-11</strong> Rust 1.39 稳定 <code>async/await</code> 语法，<code>Future</code> trait 正式进入 <code>std::future</code>，标志着第三代异步模型的确立</li>
+<li><strong>2020-12</strong> Tokio 1.0 发布，承诺 API 稳定性（至少 5 年不破坏兼容性），work-stealing 调度器成熟，成为生产环境事实标准</li>
+<li><strong>2021-04</strong> <code>monoio</code> 在字节跳动内部启动开发，探索基于 io_uring 的 thread-per-core 异步运行时模型</li>
+<li><strong>2021-09</strong> <code>tokio-uring</code> 项目启动，尝试在 Tokio 生态内集成 io_uring 支持，采用 owned buffer 模式</li>
+<li><strong>2022-11</strong> Rust 1.65 稳定 GAT（Generic Associated Types），为 async trait 和 lending iterator 等高级异步模式提供类型系统支持</li>
+<li><strong>2023-12</strong> Rust 1.75 稳定 <code>async fn in trait</code>（AFIT），允许在 trait 中直接定义 async 方法，极大简化了异步接口抽象</li>
+<li><strong>2024-02</strong> <code>async-wg</code>（Async Working Group）发布路线图更新，明确 async closure、async drop、async iteration 为下一阶段优先事项</li>
+<li><strong>2024-10</strong> Rust 1.82 稳定 <code>AsyncFn</code> trait 相关能力，async closure 进入可用状态，进一步完善异步编程体验</li>
+</ul>
+<h2>趋势与展望</h2>
+<ol>
+<li><p><strong>async trait 生态重构加速</strong>：<code>async fn in trait</code> 稳定后，大量库（tower、http、hyper）正在或即将迁移到原生 async trait，摆脱对 <code>async-trait</code> proc macro 的依赖。但 <code>dyn async trait</code>（动态分发）仍需 <code>trait_variant</code> 等辅助 crate，预计 2025 年内会有标准化方案落地。</p>
+</li>
+<li><p><strong>completion-based I/O 的标准化探索</strong>：io_uring 的 buffer ownership 模型与现有 <code>AsyncRead/AsyncWrite</code> 不兼容的问题已被广泛认知。社区正在探索统一的 <code>CompletionRead</code>/<code>CompletionWrite</code> trait 或通过 keyword generics（<code>async&lt;A&gt;</code>）实现 readiness 与 completion 模型的泛化。这是未来 1-2 年最具技术挑战性的方向。</p>
+</li>
+<li><p><strong>structured concurrency 进入视野</strong>：受 Kotlin coroutine scope 和 Java Loom 的 structured concurrency 影响，Rust 社区开始讨论 <code>TaskGroup</code>/<code>Scope</code> 等结构化并发原语。<code>moro</code>（Niko Matsakis 的实验项目）和 <code>async-scoped</code> 是早期探索，目标是解决 <code>spawn</code> 导致的生命周期断裂和错误传播问题。</p>
+</li>
+<li><p><strong>async drop 的渐进式推进</strong>：当前 async 代码中资源清理（如关闭数据库连接）只能通过显式 <code>close().await</code> 完成，<code>Drop</code> trait 无法执行异步操作。<code>async drop</code> 提案已讨论多年，技术难点在于 drop 的隐式调用点和 panic 时的行为。预计会以 opt-in 的 <code>AsyncDrop</code> trait 形式逐步引入。</p>
+</li>
+<li><p><strong>WebAssembly 异步运行时适配</strong>：随着 WASI Preview 2 引入 component model 和 async 支持，Rust 异步运行时需要适配 WASM 环境。<code>wasm-bindgen-futures</code> 已提供浏览器环境桥接，而 <code>wasmtime</code> 正在实现基于 component model 的异步 host function 调用，这将拓展 Rust 异步的应用边界。</p>
+</li>
+</ol>
+<h2>可行动建议</h2>
+<ol>
+<li><p><strong>新项目默认选择 Tokio，除非有明确的特殊需求</strong>：Tokio 的生态优势（hyper、tonic、sqlx、reqwest 等）和 1.0 稳定性承诺使其成为最安全的选择。只有在 thread-per-core 架构（如高性能代理）或 io_uring 强需求场景下，才考虑 monoio/glommio。</p>
+</li>
+<li><p><strong>库开发者应尽量保持运行时无关</strong>：使用 <code>std::future::Future</code> 而非 Tokio 特定类型；I/O 操作通过泛型参数（<code>T: AsyncRead</code>）抽象；避免直接调用 <code>tokio::spawn</code>，改为接受 executor 参数或使用 <code>futures::executor</code> 中的通用原语。</p>
+</li>
+<li><p><strong>迁移到原生 async fn in trait</strong>：如果项目最低支持 Rust 1.75+，开始将 <code>#[async_trait]</code> 宏替换为原生 <code>async fn in trait</code>。注意：需要动态分发的场景仍需 <code>async-trait</code> 或 <code>trait-variant</code> crate，可分阶段迁移。</p>
+</li>
+<li><p><strong>关注 io_uring 但不要过早押注</strong>：在非 Linux 平台（macOS、Windows）上 io_uring 不可用，且其 buffer ownership 模型会侵入整个 API 设计。建议在性能关键路径上通过 <code>tokio-uring</code> 做局部实验，而非全面重构。</p>
+</li>
+<li><p><strong>投资可观测性基础设施</strong>：异步代码的调试天然困难（堆栈跟踪碎片化、任务调度不确定性）。集成 <code>tokio-console</code>（实时任务监控）、<code>tracing</code>（结构化日志 + span 跟踪）和 <code>coredump</code> 分析工具，在开发早期就建立异步代码的可观测性能力。</p>
+</li>
+</ol>
+<h2>来源与参考</h2>
+<ul>
+<li><a href="https://github.com/rust-lang/rfcs/blob/master/text/0230-remove-runtime.md">RFC 230: Remove runtime</a> — 移除 green thread 的历史性 RFC，奠定 Rust 无隐式运行时原则</li>
+<li><a href="https://github.com/rust-lang/rfcs/blob/master/text/2592-futures.md">RFC 2592: futures-api</a> — 将 Future trait 引入标准库的 RFC</li>
+<li><a href="https://tokio.rs/tokio/tutorial">Tokio 官方文档</a> — Tokio 运行时教程与 API 参考</li>
+<li><a href="https://ryhl.io/blog/async-what-is-blocking/">Async: What is blocking?</a> — Alice Ryhl（Tokio 维护者）关于异步阻塞问题的深度解析</li>
+<li><a href="https://github.com/bytedance/monoio">monoio GitHub</a> — 字节跳动开源的 io_uring 异步运行时</li>
+<li><a href="https://github.com/DataDog/glommio">glommio GitHub</a> — Datadog 维护的 thread-per-core 异步运行时</li>
+<li><a href="https://rust-lang.github.io/async-fundamentals-initiative/">Rust Async Working Group</a> — Rust 官方异步基础设施工作组进展追踪</li>
+<li><a href="https://without.boats/blog/pin/">Without Boats: Pin</a> — <code>Pin&lt;T&gt;</code> 设计者关于 Pin 机制的系列博文</li>
+<li><a href="https://blog.rust-lang.org/2023/12/21/async-fn-rpit-in-traits.html">Async fn in trait stabilization</a> — Rust 官方博客关于 AFIT 稳定化的公告</li>
+<li><a href="https://github.com/tokio-rs/console">tokio-console GitHub</a> — Tokio 异步任务诊断工具</li>
+</ul>
+
+  <hr>
+  <div class="meta">
+    本报告由 DeepInsight 洞察 Agent 生成 ·
+    <a href="https://github.com/Boris-hbx/DeepInsight" target="_blank">GitHub</a>
+  </div>
+</body>
+</html>

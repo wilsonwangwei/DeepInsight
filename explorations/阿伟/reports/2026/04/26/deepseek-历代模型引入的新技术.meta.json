@@ -1,0 +1,30 @@
+{
+  "id": "10f8ea87-1c9f-4ccc-8f5c-2e21d71b22dd",
+  "title": "DeepSeek 历代模型引入的新技术",
+  "createdAt": "2026-04-25T23:27:13.589Z",
+  "type": "survey",
+  "tags": {
+    "user": [
+      "LLM",
+      "DeepSeek"
+    ],
+    "auto": [
+      "MoE架构",
+      "注意力机制",
+      "模型压缩",
+      "混合精度",
+      "推理优化",
+      "稀疏激活",
+      "KV缓存",
+      "多令牌预测"
+    ],
+    "categories": []
+  },
+  "metadata": {
+    "inputTokens": 606,
+    "outputTokens": 3008,
+    "cost": 0.046938,
+    "llmProvider": "claude",
+    "confidence": 0.85
+  }
+}

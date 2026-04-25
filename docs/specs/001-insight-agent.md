@@ -3,7 +3,7 @@ id: 001
 title: 洞察 Agent（Insight Agent）
 author: 阿伟
 reviewers: []
-status: draft
+status: approved
 created: 2026-04-25
 updated: 2026-04-25
 related_adrs: []
