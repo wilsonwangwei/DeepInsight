@@ -1,0 +1,32 @@
+{
+  "id": "084ff844-88f6-4d78-a665-6d874200220b",
+  "title": "SDD 开发模式下 SPEC 工程能力构建方向",
+  "createdAt": "2026-04-25T23:34:05.131Z",
+  "type": "survey",
+  "tags": {
+    "user": [
+      "SDD",
+      "Spec",
+      "工程能力",
+      "开发模式"
+    ],
+    "auto": [
+      "规格驱动",
+      "代码生成",
+      "形式验证",
+      "自动测试",
+      "接口设计",
+      "类型系统",
+      "微服务",
+      "持续集成"
+    ],
+    "categories": []
+  },
+  "metadata": {
+    "inputTokens": 614,
+    "outputTokens": 3268,
+    "cost": 0.050862000000000004,
+    "llmProvider": "claude",
+    "confidence": 0.85
+  }
+}

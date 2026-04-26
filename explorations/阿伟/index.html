@@ -1,76 +1,505 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<title>探索期 · 起步页</title>
-<style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
-    max-width: 720px;
-    margin: 60px auto;
-    padding: 0 24px;
-    color: #24292f;
-    line-height: 1.7;
-  }
-  h1 { font-size: 28px; margin-bottom: 8px; }
-  h2 { font-size: 18px; margin-top: 32px; border-bottom: 1px solid #d8dee4; padding-bottom: 4px; }
-  code { background: #f3f5f7; padding: 2px 6px; border-radius: 4px; font-family: "JetBrains Mono", Consolas, monospace; font-size: 0.9em; }
-  .hint { background: #fff8c5; border-left: 4px solid #d4a72c; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 24px 0; }
-  .meta { color: #57606a; font-size: 13px; margin-bottom: 32px; }
-  ul { padding-left: 22px; }
-  li { margin: 4px 0; }
-  .row { display: flex; gap: 16px; flex-wrap: wrap; }
-  .row > div { flex: 1; min-width: 280px; padding: 14px 18px; background: #f6f8fa; border-radius: 8px; border: 1px solid #d8dee4; }
-  .row h3 { margin: 0 0 8px; font-size: 15px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>洞察报告 — DeepInsight</title>
+  <style>
+    :root {
+      --bg: #f8fafc; --bg-card: #ffffff; --bg-hover: #f1f5f9;
+      --ink: #0f172a; --ink-2: #334155; --ink-3: #64748b;
+      --border: #e2e8f0; --border-hover: #cbd5e1;
+      --accent: #2563eb; --accent-soft: #eff6ff; --accent-hover: #1d4ed8;
+      --tag-bg: #f1f5f9; --tag-text: #475569;
+      --tag-user-bg: #dbeafe; --tag-user-text: #1e40af;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+      --shadow: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -4px rgba(0,0,0,.05);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
+        --ink: #f1f5f9; --ink-2: #cbd5e1; --ink-3: #94a3b8;
+        --border: #334155; --border-hover: #475569;
+        --accent: #60a5fa; --accent-soft: #1e3a5f; --accent-hover: #93bbfd;
+        --tag-bg: #334155; --tag-text: #94a3b8;
+        --tag-user-bg: #1e3a5f; --tag-user-text: #93c5fd;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+        --shadow: 0 4px 6px rgba(0,0,0,.4);
+        --shadow-lg: 0 10px 15px rgba(0,0,0,.5);
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+    /* Header */
+    .header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 1.5rem 2rem; position: sticky; top: 0; z-index: 10; box-shadow: var(--shadow-sm); }
+    .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+    .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.25rem; color: var(--ink); }
+    .logo-dot { width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(135deg, var(--accent), #7c3aed); }
+    .header-stats { display: flex; gap: 1.5rem; margin-left: auto; font-size: 0.85rem; color: var(--ink-3); }
+    .header-stats span { display: flex; align-items: center; gap: 0.35rem; }
+    .header-stats strong { color: var(--ink); font-size: 1.1rem; }
+    .btn-new { padding: 0.6rem 1.2rem; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+    .btn-new:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: var(--shadow); }
+    .btn-new svg { width: 16px; height: 16px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--bg-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; box-shadow: var(--shadow-lg); }
+    .modal h2 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--ink); }
+    .modal label { display: block; font-size: 0.85rem; color: var(--ink-3); margin-bottom: 0.5rem; font-weight: 500; }
+    .modal input, .modal textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 0.95rem; margin-bottom: 1rem; font-family: inherit; }
+    .modal input:focus, .modal textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .modal textarea { resize: vertical; min-height: 80px; }
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .modal-btn { padding: 0.65rem 1.5rem; border: none; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: all 0.15s; font-weight: 500; }
+    .modal-btn-cancel { background: var(--bg-hover); color: var(--ink-3); }
+    .modal-btn-cancel:hover { background: var(--border); }
+    .modal-btn-submit { background: var(--accent); color: white; }
+    .modal-btn-submit:hover { background: var(--accent-hover); }
+    .modal-btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Progress Toast */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; min-width: 320px; box-shadow: var(--shadow-lg); z-index: 200; transform: translateY(150%); transition: transform 0.3s; }
+    .toast.show { transform: translateY(0); }
+    .toast-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .toast-spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast-title { font-weight: 600; color: var(--ink); font-size: 0.95rem; }
+    .toast-close { margin-left: auto; cursor: pointer; color: var(--ink-3); background: none; border: none; font-size: 1.2rem; line-height: 1; padding: 0; }
+    .toast-close:hover { color: var(--ink); }
+    .toast-body { font-size: 0.85rem; color: var(--ink-3); margin-bottom: 0.75rem; }
+    .toast-progress { height: 6px; background: var(--bg-hover); border-radius: 3px; overflow: hidden; }
+    .toast-progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), #7c3aed); transition: width 0.3s; }
+    .toast-status { font-size: 0.8rem; color: var(--ink-3); margin-top: 0.5rem; }
+    .toast.success .toast-spinner { display: none; }
+    .toast.success .toast-header::before { content: "✓"; font-size: 1.2rem; color: #10b981; }
+    .toast.error .toast-spinner { display: none; }
+    .toast.error .toast-header::before { content: "✗"; font-size: 1.2rem; color: #ef4444; }
+
+    /* Search & Controls */
+    .controls { max-width: 1400px; margin: 1.5rem auto; padding: 0 2rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    .search-wrap { flex: 1; min-width: 280px; position: relative; }
+    .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--ink-3); }
+    .search-box { width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-card); color: var(--ink); font-size: 0.95rem; transition: border-color 0.2s, box-shadow 0.2s; }
+    .search-box:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .sort-group { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .sort-btn { padding: 0.6rem 1rem; background: var(--bg-card); border: none; color: var(--ink-3); font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
+    .sort-btn:hover { background: var(--bg-hover); color: var(--ink); }
+    .sort-btn.active { background: var(--accent); color: white; }
+    .view-group { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .view-btn { padding: 0.6rem 0.75rem; background: var(--bg-card); border: none; color: var(--ink-3); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; font-size: 0.8rem; }
+    .view-btn:hover { background: var(--bg-hover); }
+    .view-btn.active { background: var(--accent); color: white; }
+    .view-btn svg { width: 16px; height: 16px; margin-right: 0.35rem; }
+
+    .format-group { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .format-btn { padding: 0.6rem 1rem; background: var(--bg-card); border: none; color: var(--ink-3); font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
+    .format-btn:hover { background: var(--bg-hover); color: var(--ink); }
+    .format-btn.active { background: var(--accent); color: white; }
+
+    /* Tags filter */
+    .tags-section { max-width: 1400px; margin: 0 auto 1rem; padding: 0 2rem; }
+    .tags-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; cursor: pointer; user-select: none; }
+    .tags-header:hover .tags-title { color: var(--accent); }
+    .tags-title { font-size: 0.85rem; color: var(--ink-3); font-weight: 500; display: flex; align-items: center; gap: 0.5rem; }
+    .tags-toggle { width: 16px; height: 16px; transition: transform 0.2s; }
+    .tags-toggle.collapsed { transform: rotate(-90deg); }
+    .tags-controls { display: flex; gap: 0.5rem; margin-left: auto; }
+    .tags-sort { font-size: 0.75rem; padding: 0.25rem 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--ink-3); cursor: pointer; transition: all 0.15s; }
+    .tags-sort:hover { border-color: var(--accent); color: var(--accent); }
+    .tags-sort.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .tags-clear { font-size: 0.8rem; color: var(--accent); cursor: pointer; border: none; background: none; padding: 0.25rem 0.5rem; border-radius: 4px; }
+    .tags-clear:hover { background: var(--accent-soft); }
+    .tags-wrap { display: flex; gap: 0.5rem; flex-wrap: wrap; max-height: 200px; overflow-y: auto; transition: max-height 0.3s; }
+    .tags-wrap.collapsed { max-height: 0; overflow: hidden; }
+    .tag-chip { padding: 0.35rem 0.75rem; border: 1px solid var(--border); border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; background: var(--bg-card); color: var(--ink-3); user-select: none; }
+    .tag-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .tag-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .tag-chip .count { margin-left: 0.25rem; opacity: 0.6; font-size: 0.75rem; }
+    .tag-chip .type-badge { margin-right: 0.25rem; font-size: 0.7rem; opacity: 0.7; }
+
+    /* Report grid */
+    .content { max-width: 1400px; margin: 0 auto; padding: 0 2rem 3rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1rem; }
+    .grid.list-view { grid-template-columns: 1fr; }
+
+    /* Card */
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+    .card:hover { border-color: var(--accent); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), #7c3aed); opacity: 0; transition: opacity 0.2s; }
+    .card:hover::before { opacity: 1; }
+    .card-type { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.2rem 0.5rem; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-bottom: 0.75rem; }
+    .card h3 { font-size: 1.15rem; font-weight: 600; line-height: 1.4; margin-bottom: 0.5rem; color: var(--ink); }
+    .card-meta { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--ink-3); margin-bottom: 1rem; }
+    .card-meta svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 2px; }
+    .card-tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .card-tags .t { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+    .card-tags .t-user { background: var(--tag-user-bg); color: var(--tag-user-text); }
+    .card-tags .t-auto { background: var(--tag-bg); color: var(--tag-text); }
+
+    /* List view card */
+    .grid.list-view .card { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+
+    .empty { text-align: center; color: var(--ink-3); padding: 4rem 2rem; }
+    .empty code { background: var(--bg-hover); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.9rem; }
+    .result-count { font-size: 0.85rem; color: var(--ink-3); margin-bottom: 1rem; }
+  </style>
 </head>
 <body>
-  <h1>👋 你的探索从这里开始</h1>
-  <p class="meta">这是 <code>explorations/&lt;代号&gt;/index.html</code> 的起步模板。把它换成你的探索内容。</p>
 
-  <div class="hint">
-    第一步：编辑同目录的 <code>README.md</code>（标题 / 思路 / 截图路径），看板会自动收录你的卡片。
+<div class="header">
+  <div class="header-inner">
+    <div class="logo"><div class="logo-dot"></div>DeepInsight</div>
+    <div class="header-stats" id="stats"></div>
+    <button class="btn-new" onclick="showModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      新建洞察
+    </button>
   </div>
+</div>
 
-  <h2>你可以做什么</h2>
-  <div class="row">
-    <div>
-      <h3>🎨 静态可视化</h3>
-      <ul>
-        <li>D3 / Chart.js / vis-network 画图</li>
-        <li>Mermaid 渲染流程</li>
-        <li>纯 HTML/CSS 交互卡片</li>
-      </ul>
-    </div>
-    <div>
-      <h3>⚛ 用框架</h3>
-      <ul>
-        <li>Vite / Next / Astro / Vue / Svelte</li>
-        <li>build 后把产物放本目录</li>
-        <li>确保 <code>index.html</code> 是入口</li>
-      </ul>
-    </div>
-    <div>
-      <h3>📝 设计稿</h3>
-      <ul>
-        <li>纯 markdown 渲染的设计文档</li>
-        <li>截图 + 注解</li>
-        <li>线框图（Excalidraw 导出 SVG）</li>
-      </ul>
+<div class="controls">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input class="search-box" id="search" type="text" placeholder="搜索报告标题、标签..." oninput="render()">
+  </div>
+  <div class="sort-group">
+    <button class="sort-btn active" data-sort="date" onclick="setSort('date')">最新</button>
+    <button class="sort-btn" data-sort="title" onclick="setSort('title')">标题</button>
+  </div>
+  <div class="format-group">
+    <button class="format-btn active" data-format="html" onclick="setFormat('html')">HTML</button>
+    <button class="format-btn" data-format="md" onclick="setFormat('md')">Markdown</button>
+    <button class="format-btn" data-format="ppt" onclick="setFormat('ppt')">PPT</button>
+  </div>
+  <div class="view-group">
+    <button class="view-btn active" data-view="grid" onclick="setView('grid')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="view-btn" data-view="list" onclick="setView('list')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="tags-section">
+  <div class="tags-header" onclick="toggleTagsPanel()">
+    <span class="tags-title">
+      <svg class="tags-toggle collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      标签过滤 <span id="active-count"></span>
+    </span>
+    <div class="tags-controls" onclick="event.stopPropagation()">
+      <button class="tags-sort active" data-tsort="count" onclick="setTagSort('count')">按数量</button>
+      <button class="tags-sort" data-tsort="name" onclick="setTagSort('name')">按名称</button>
+      <button class="tags-sort" data-tsort="type" onclick="setTagSort('type')">按类型</button>
+      <button class="tags-clear" id="tags-clear" onclick="clearTags()" style="display:none">清除</button>
     </div>
   </div>
+  <div class="tags-wrap collapsed" id="tags"></div>
+</div>
 
-  <h2>不要做的事</h2>
-  <ul>
-    <li>调真实 API（前期纯静态，用 mock 数据展示思路）</li>
-    <li>写到 <code>/web</code> 或其他同事目录（hook 会拦你）</li>
-    <li>提交大于 200KB 的图片到仓库</li>
-  </ul>
+<div class="content">
+  <div class="result-count" id="result-count"></div>
+  <div class="grid" id="grid"></div>
+</div>
 
-  <h2>提交</h2>
-  <pre><code>git add explorations/&lt;代号&gt;
-git commit -m "[pair] 阶段性探索：&lt;一句话&gt;"
-git push</code></pre>
-  <p>push 到 main 后，CI 30-60 秒内会刷新看板「前期探索」tab。</p>
+<!-- Modal -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this) hideModal()">
+  <div class="modal">
+    <h2>新建洞察报告</h2>
+    <form id="insight-form" onsubmit="submitInsight(event)">
+      <label>课题 *</label>
+      <input type="text" id="topic" placeholder="例如：Rust 异步运行时演进" required>
+
+      <label>用户标签（可选，逗号分隔）</label>
+      <input type="text" id="user-tags" placeholder="例如：Rust, 异步编程">
+
+      <label>时间范围（可选）</label>
+      <input type="text" id="time-range" placeholder="例如：2023-2025">
+
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-cancel" onclick="hideModal()">取消</button>
+        <button type="submit" class="modal-btn modal-btn-submit" id="submit-btn">开始生成</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-header">
+    <div class="toast-spinner"></div>
+    <span class="toast-title" id="toast-title">正在生成报告</span>
+    <button class="toast-close" onclick="hideToast()">×</button>
+  </div>
+  <div class="toast-body" id="toast-body"></div>
+  <div class="toast-progress">
+    <div class="toast-progress-bar" id="toast-progress" style="width: 0%"></div>
+  </div>
+  <div class="toast-status" id="toast-status"></div>
+</div>
+
+<script>
+let reports = [];
+let activeTags = new Set();
+let sortMode = 'date';
+let viewMode = 'grid';
+let formatMode = 'html';
+let tagSortMode = 'count';
+let tagsExpanded = false;
+
+async function init() {
+  try {
+    const res = await fetch('reports/index.json');
+    reports = await res.json();
+  } catch (e) {
+    document.getElementById('grid').innerHTML = '<div class="empty">暂无报告。<br>运行 <code>node insight-cli.mjs --topic "课题"</code> 生成第一份。</div>';
+    return;
+  }
+  renderStats();
+  renderTags();
+  render();
+}
+
+function renderStats() {
+  const tagSet = new Set();
+  reports.forEach(r => [...(r.tags.user||[]),...(r.tags.auto||[])].forEach(t => tagSet.add(t)));
+  document.getElementById('stats').innerHTML =
+    `<span><strong>${reports.length}</strong> 份报告</span>` +
+    `<span><strong>${tagSet.size}</strong> 个标签</span>`;
+}
+
+function renderTags() {
+  const tagData = [];
+  reports.forEach(r => {
+    const userTags = r.tags.user || [];
+    const autoTags = r.tags.auto || [];
+    userTags.forEach(t => {
+      let entry = tagData.find(x => x.tag === t);
+      if (!entry) { entry = { tag: t, count: 0, type: 'user' }; tagData.push(entry); }
+      entry.count++;
+    });
+    autoTags.forEach(t => {
+      let entry = tagData.find(x => x.tag === t);
+      if (!entry) { entry = { tag: t, count: 0, type: 'auto' }; tagData.push(entry); }
+      entry.count++;
+    });
+  });
+
+  if (tagSortMode === 'count') tagData.sort((a,b) => b.count - a.count);
+  else if (tagSortMode === 'name') tagData.sort((a,b) => a.tag.localeCompare(b.tag, 'zh-CN'));
+  else if (tagSortMode === 'type') tagData.sort((a,b) => a.type === b.type ? a.tag.localeCompare(b.tag, 'zh-CN') : (a.type === 'user' ? -1 : 1));
+
+  const typeBadge = { user: '👤', auto: '🤖' };
+  document.getElementById('tags').innerHTML = tagData.map(({tag, count, type}) =>
+    `<span class="tag-chip${activeTags.has(tag)?' active':''}" onclick="toggleTag('${tag}')">` +
+    `<span class="type-badge">${typeBadge[type]}</span>${tag}<span class="count">${count}</span></span>`
+  ).join('');
+
+  const clearBtn = document.getElementById('tags-clear');
+  const activeCount = document.getElementById('active-count');
+  if (activeTags.size > 0) {
+    clearBtn.style.display = '';
+    activeCount.textContent = `(${activeTags.size} 个已选)`;
+    activeCount.style.color = 'var(--accent)';
+  } else {
+    clearBtn.style.display = 'none';
+    activeCount.textContent = '';
+  }
+}
+
+function toggleTagsPanel() {
+  tagsExpanded = !tagsExpanded;
+  const wrap = document.getElementById('tags');
+  const toggle = document.querySelector('.tags-toggle');
+  wrap.classList.toggle('collapsed', !tagsExpanded);
+  toggle.classList.toggle('collapsed', !tagsExpanded);
+}
+
+function setTagSort(mode) {
+  tagSortMode = mode;
+  document.querySelectorAll('.tags-sort').forEach(b => b.classList.toggle('active', b.dataset.tsort === mode));
+  renderTags();
+}
+
+function toggleTag(tag) {
+  if (activeTags.has(tag)) activeTags.delete(tag); else activeTags.add(tag);
+  renderTags();
+  render();
+}
+
+function clearTags() {
+  activeTags.clear();
+  renderTags();
+  render();
+}
+
+function setSort(mode) {
+  sortMode = mode;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === mode));
+  render();
+}
+
+function setView(mode) {
+  viewMode = mode;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === mode));
+  const grid = document.getElementById('grid');
+  grid.classList.toggle('list-view', mode === 'list');
+  render();
+}
+
+function setFormat(mode) {
+  formatMode = mode;
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.toggle('active', b.dataset.format === mode));
+}
+
+function render() {
+  const q = (document.getElementById('search')?.value || '').toLowerCase();
+  let list = [...reports];
+
+  if (activeTags.size > 0) {
+    list = list.filter(r => {
+      const t = [...new Set([...(r.tags.user||[]),...(r.tags.auto||[])])];
+      return [...activeTags].some(a => t.includes(a));
+    });
+  }
+
+  if (q) {
+    list = list.filter(r => {
+      const t = [...(r.tags.user||[]),...(r.tags.auto||[])];
+      return r.title.toLowerCase().includes(q) || t.some(x => x.toLowerCase().includes(q));
+    });
+  }
+
+  if (sortMode === 'date') list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  else list.sort((a,b) => a.title.localeCompare(b.title, 'zh-CN'));
+
+  document.getElementById('result-count').textContent = list.length === reports.length
+    ? `共 ${list.length} 份报告`
+    : `${list.length} / ${reports.length} 份报告`;
+
+  if (!list.length) {
+    document.getElementById('grid').innerHTML = '<div class="empty">无匹配报告</div>';
+    return;
+  }
+
+  const typeLabel = { survey: '课题综述', 'daily-scan': '每日扫描', 'pdf-analysis': 'PDF 分析' };
+
+  const formatExt = { html: '.html', md: '.md', ppt: '.marp.md' };
+
+  document.getElementById('grid').innerHTML = list.map(r => {
+    const userTags = r.tags.user || [];
+    const autoTags = [...new Set(r.tags.auto || [])].filter(t => !userTags.includes(t));
+    const date = r.createdAt.slice(0, 10);
+    const openUrl = `reports/${r.path}${formatExt[formatMode]}`;
+    return `
+      <div class="card" onclick="window.open('${openUrl}','_blank')">
+        <div>
+          <span class="card-type">${typeLabel[r.type] || r.type}</span>
+          <h3>${r.title}</h3>
+          <div class="card-meta">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${date}</span>
+          </div>
+          <div class="card-tags">
+            ${userTags.map(t => `<span class="t t-user">${t}</span>`).join('')}
+            ${autoTags.map(t => `<span class="t t-auto">${t}</span>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+init();
+
+function showModal() {
+  document.getElementById('modal').classList.add('show');
+  document.getElementById('topic').focus();
+}
+
+function hideModal() {
+  document.getElementById('modal').classList.remove('show');
+  document.getElementById('insight-form').reset();
+}
+
+function showToast(title, body) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+  document.getElementById('toast-progress').style.width = '0%';
+  document.getElementById('toast-status').textContent = '';
+  toast.className = 'toast show';
+}
+
+function hideToast() {
+  document.getElementById('toast').classList.remove('show');
+}
+
+function updateToastProgress(percent, status) {
+  document.getElementById('toast-progress').style.width = percent + '%';
+  if (status) document.getElementById('toast-status').textContent = status;
+}
+
+function toastSuccess(title, body) {
+  const toast = document.getElementById('toast');
+  toast.className = 'toast show success';
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+  document.getElementById('toast-progress').style.width = '100%';
+  setTimeout(hideToast, 5000);
+}
+
+function toastError(title, body) {
+  const toast = document.getElementById('toast');
+  toast.className = 'toast show error';
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+}
+
+async function submitInsight(e) {
+  e.preventDefault();
+  const topic = document.getElementById('topic').value.trim();
+  const userTags = document.getElementById('user-tags').value.trim();
+  const timeRange = document.getElementById('time-range').value.trim();
+
+  hideModal();
+  showToast('正在生成报告', topic);
+
+  const args = ['--topic', topic];
+  if (userTags) args.push('--tags', userTags);
+  if (timeRange) args.push('--time', timeRange);
+
+  try {
+    updateToastProgress(10, '调用 CLI...');
+
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, userTags: userTags.split(',').map(t => t.trim()).filter(Boolean), timeRange })
+    });
+
+    if (!response.ok) throw new Error('生成失败');
+
+    updateToastProgress(30, '生成综述报告...');
+    await new Promise(r => setTimeout(r, 1000));
+    updateToastProgress(60, '提取标签...');
+    await new Promise(r => setTimeout(r, 1000));
+    updateToastProgress(90, '生成 HTML + Marp...');
+    await new Promise(r => setTimeout(r, 500));
+
+    const result = await response.json();
+
+    toastSuccess('报告生成完成', topic);
+
+    // 重新加载报告列表
+    await init();
+
+  } catch (err) {
+    toastError('生成失败', err.message || '请检查网络连接或 CLI 配置');
+  }
+}
+</script>
 </body>
 </html>

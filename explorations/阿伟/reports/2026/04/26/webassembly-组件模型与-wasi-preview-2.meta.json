@@ -1,0 +1,30 @@
+{
+  "id": "f5fd4f5c-2fc9-4701-abb1-73fabeddada3",
+  "title": "WebAssembly 组件模型与 WASI Preview 2",
+  "createdAt": "2026-04-26T00:05:04.019Z",
+  "type": "survey",
+  "tags": {
+    "user": [
+      "WebAssembly",
+      "WASI"
+    ],
+    "auto": [
+      "WebAssembly",
+      "组件模型",
+      "WASI",
+      "异步IO",
+      "跨语言",
+      "边缘计算",
+      "插件系统",
+      "云原生"
+    ],
+    "categories": []
+  },
+  "metadata": {
+    "inputTokens": 613,
+    "outputTokens": 3151,
+    "cost": 0.049104,
+    "llmProvider": "claude",
+    "confidence": 0.85
+  }
+}

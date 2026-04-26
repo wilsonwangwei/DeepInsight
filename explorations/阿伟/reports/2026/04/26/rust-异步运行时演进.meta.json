@@ -1,0 +1,27 @@
+{
+  "id": "db559956-05ba-4489-9a34-e43145880011",
+  "title": "Rust 异步运行时演进",
+  "createdAt": "2026-04-25T23:20:23.853Z",
+  "type": "survey",
+  "tags": {
+    "user": [],
+    "auto": [
+      "异步运行时",
+      "Rust",
+      "零成本抽象",
+      "io_uring",
+      "并发模型",
+      "Tokio",
+      "状态机",
+      "系统编程"
+    ],
+    "categories": []
+  },
+  "metadata": {
+    "inputTokens": 801,
+    "outputTokens": 3678,
+    "cost": 0.057573,
+    "llmProvider": "claude",
+    "confidence": 0.85
+  }
+}
