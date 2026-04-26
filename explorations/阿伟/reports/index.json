@@ -69,5 +69,75 @@
       "categories": []
     },
     "path": "2026/04/26/sdd-开发模式下-spec-工程能力构建方向"
+  },
+  {
+    "id": "f5fd4f5c-2fc9-4701-abb1-73fabeddada3",
+    "title": "WebAssembly 组件模型与 WASI Preview 2",
+    "createdAt": "2026-04-26T00:05:04.019Z",
+    "type": "survey",
+    "tags": {
+      "user": [
+        "WebAssembly",
+        "WASI"
+      ],
+      "auto": [
+        "WebAssembly",
+        "组件模型",
+        "WASI",
+        "异步IO",
+        "跨语言",
+        "边缘计算",
+        "插件系统",
+        "云原生"
+      ],
+      "categories": []
+    },
+    "path": "2026/04/26/webassembly-组件模型与-wasi-preview-2"
+  },
+  {
+    "id": "e7e2ddd8-5641-4db1-959c-5a42a18f53ca",
+    "title": "Kubernetes Operator 开发最佳实践",
+    "createdAt": "2026-04-26T00:48:18.541Z",
+    "type": "survey",
+    "tags": {
+      "user": [
+        "Kubernetes",
+        "Operator"
+      ],
+      "auto": [
+        "Kubernetes",
+        "Operator",
+        "控制器",
+        "云原生",
+        "自动运维",
+        "可观测性",
+        "CRD",
+        "容器编排"
+      ],
+      "categories": []
+    },
+    "path": "2026/04/26/kubernetes-operator-开发最佳实践"
+  },
+  {
+    "id": "afc99534-3188-420f-a411-f20ae28575d8",
+    "title": "AI 软件开发工程中的skill关键工程技术与治理技术",
+    "createdAt": "2026-04-26T01:40:40.050Z",
+    "type": "survey",
+    "tags": {
+      "user": [
+        "skill，AI for 工程"
+      ],
+      "auto": [
+        "提示工程",
+        "检索增强",
+        "代码治理",
+        "智能体",
+        "代码生成",
+        "安全合规",
+        "静态分析"
+      ],
+      "categories": []
+    },
+    "path": "2026/04/26/ai-软件开发工程中的skill关键工程技术与治理技术"
   }
 ]

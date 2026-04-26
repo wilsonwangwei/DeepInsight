@@ -1,0 +1,30 @@
+{
+  "id": "e7e2ddd8-5641-4db1-959c-5a42a18f53ca",
+  "title": "Kubernetes Operator 开发最佳实践",
+  "createdAt": "2026-04-26T00:48:18.541Z",
+  "type": "survey",
+  "tags": {
+    "user": [
+      "Kubernetes",
+      "Operator"
+    ],
+    "auto": [
+      "Kubernetes",
+      "Operator",
+      "控制器",
+      "云原生",
+      "自动运维",
+      "可观测性",
+      "CRD",
+      "容器编排"
+    ],
+    "categories": []
+  },
+  "metadata": {
+    "inputTokens": 608,
+    "outputTokens": 3454,
+    "cost": 0.053634,
+    "llmProvider": "claude",
+    "confidence": 0.85
+  }
+}
