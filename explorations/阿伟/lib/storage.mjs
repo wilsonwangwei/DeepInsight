@@ -30,6 +30,9 @@ export function saveReport(report) {
 
   fs.writeFileSync(path.join(dir, `${slug}.md`), report.markdown, 'utf-8');
   fs.writeFileSync(path.join(dir, `${slug}.html`), report.html, 'utf-8');
+  if (report.marpMarkdown) {
+    fs.writeFileSync(path.join(dir, `${slug}.marp.md`), report.marpMarkdown, 'utf-8');
+  }
   fs.writeFileSync(path.join(dir, `${slug}.meta.json`), JSON.stringify({
     id: report.id,
     title: report.title,

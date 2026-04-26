@@ -40,16 +40,47 @@ function createClaudeProvider() {
   return {
     name: 'claude',
     async generate(prompt, options = {}) {
-      const res = await client.messages.create({
-        model: options.model || model,
-        max_tokens: options.maxTokens || 8192,
-        messages: [{ role: 'user', content: prompt }],
-      });
-      const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('');
-      return {
-        text,
-        usage: { input: res.usage.input_tokens, output: res.usage.output_tokens },
-      };
+      const maxRetries = options.maxRetries || 3;
+      const timeout = options.timeout || 120000; // 2 分钟
+      let lastError;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+          const res = await client.messages.create({
+            model: options.model || model,
+            max_tokens: options.maxTokens || 8192,
+            messages: [{ role: 'user', content: prompt }],
+          }, { signal: controller.signal });
+
+          clearTimeout(timeoutId);
+
+          const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('');
+          return {
+            text,
+            usage: { input: res.usage.input_tokens, output: res.usage.output_tokens },
+          };
+        } catch (err) {
+          lastError = err;
+          const isRetryable = err.name === 'AbortError' ||
+                              err.status === 429 ||
+                              err.status === 500 ||
+                              err.status === 503 ||
+                              err.code === 'ECONNRESET';
+
+          if (!isRetryable || attempt === maxRetries) {
+            throw new Error(`LLM 调用失败 (尝试 ${attempt}/${maxRetries}): ${err.message || err}`);
+          }
+
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000); // 指数退避，最大 8s
+          console.log(`  重试 ${attempt}/${maxRetries}，等待 ${delay}ms ...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+
+      throw lastError;
     },
   };
 }

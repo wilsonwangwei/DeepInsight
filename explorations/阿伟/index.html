@@ -45,13 +45,33 @@
       font-size: 0.8rem; color: var(--muted);
     }
     .empty { text-align: center; color: var(--muted); padding: 3rem; }
+    .controls { display: flex; gap: 1rem; align-items: center; margin: 1.5rem 0; flex-wrap: wrap; }
+    .search-box {
+      flex: 1; min-width: 250px; padding: 0.75rem 1rem;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: var(--bg-2); color: var(--ink); font-size: 0.95rem;
+    }
+    .search-box:focus { outline: none; border-color: var(--accent); }
+    .sort-btn {
+      padding: 0.75rem 1rem; border: 1px solid var(--border);
+      background: var(--bg-2); border-radius: 6px; cursor: pointer;
+      font-size: 0.9rem; transition: all 0.2s; color: var(--ink);
+    }
+    .sort-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .sort-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
   </style>
 </head>
 <body>
   <h1>🔍 洞察报告</h1>
   <p style="color: var(--muted); margin-bottom: 1rem;">
-    点击报告卡片查看详情 · 点击标签过滤
+    点击报告卡片查看详情 · 点击标签过滤 · 输入关键词搜索
   </p>
+
+  <div class="controls">
+    <input class="search-box" id="search" type="text" placeholder="搜索报告标题或标签..." oninput="renderReports()">
+    <button class="sort-btn active" id="sort-date" onclick="setSortMode('date')">按日期</button>
+    <button class="sort-btn" id="sort-title" onclick="setSortMode('title')">按标题</button>
+  </div>
 
   <div class="filters" id="filters"></div>
   <div class="reports" id="reports"></div>
@@ -59,6 +79,7 @@
   <script>
     let allReports = [];
     let activeTags = new Set();
+    let sortMode = 'date'; // 'date' or 'title'
 
     async function loadReports() {
       try {
@@ -93,13 +114,39 @@
       });
     }
 
+    function setSortMode(mode) {
+      sortMode = mode;
+      document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`sort-${mode}`).classList.add('active');
+      renderReports();
+    }
+
     function renderReports() {
+      const searchTerm = document.getElementById('search')?.value.toLowerCase() || '';
       let filtered = allReports;
+
+      // 标签过滤
       if (activeTags.size > 0) {
-        filtered = allReports.filter(r => {
+        filtered = filtered.filter(r => {
           const tags = [...(r.tags.user || []), ...(r.tags.auto || [])];
           return Array.from(activeTags).some(t => tags.includes(t));
         });
+      }
+
+      // 搜索过滤
+      if (searchTerm) {
+        filtered = filtered.filter(r => {
+          const tags = [...(r.tags.user || []), ...(r.tags.auto || [])];
+          return r.title.toLowerCase().includes(searchTerm) ||
+                 tags.some(t => t.toLowerCase().includes(searchTerm));
+        });
+      }
+
+      // 排序
+      if (sortMode === 'date') {
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      } else {
+        filtered.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'));
       }
 
       if (filtered.length === 0) {
